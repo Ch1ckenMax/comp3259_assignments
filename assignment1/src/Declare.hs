@@ -31,12 +31,12 @@ e5 :: Exp
 e5 = Add (Fact (Num 0)) (Mod (Num 6) (Num 3))
 
 e :: Exp
-e = error "TODO: Question 1"
+e = Div (Add (Num 5) (Power (Num 5) (Num 2)) ) (Sub (Num 6) (Mult (Num 3) (Num 1)) )
 
 -- 
 -- TODO: please write down the evaluation result of `e` in the comment below
 -- 
--- Answer: FILL IN HERE
+-- Answer: 10
 -- 
 
 
@@ -59,6 +59,7 @@ e = error "TODO: Question 1"
 --
 -- >>> e5
 -- ((0 ! ) + (6 % 3))
+--
 showExp :: Exp -> String
 showExp (Num n)           = show n
 showExp (Add exp1 exp2)   = "(" ++ showExp exp1 ++ " + " ++ showExp exp2 ++ ")"
@@ -67,4 +68,5 @@ showExp (Mult exp1 exp2)  = "(" ++ showExp exp1 ++ " * " ++ showExp exp2 ++ ")"
 showExp (Div exp1 exp2)   = "(" ++ showExp exp1 ++ " / " ++ showExp exp2 ++ ")"
 showExp (Power exp1 exp2) = "(" ++ showExp exp1 ++ " ^ " ++ showExp exp2 ++ ")"
 showExp (Neg exp)         = "(" ++ " - " ++ showExp exp ++ ")"
-showExp _ = error "TODO: Question 3"
+showExp (Fact exp)        = "(" ++ showExp exp ++ " ! )"
+showExp (Mod exp1 exp2)   = "(" ++ showExp exp1 ++ " % " ++ showExp exp2 ++ ")"
