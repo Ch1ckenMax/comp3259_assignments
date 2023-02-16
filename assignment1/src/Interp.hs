@@ -3,7 +3,23 @@ module Interp where
 import Parser
 import Declare
 
--- Factorial Function
+-- | Factorial Function
+--
+-- >>> factorial 5
+-- 120
+--
+-- >>> factorial 1
+-- 1
+--
+-- >>> factorial 0
+-- 1
+--
+-- >>> factorial 10
+-- 3628800
+--
+-- >>> factorial 9
+-- 362880
+--
 factorial :: Int -> Int
 factorial 0 = 1 -- Base Case
 factorial n = n * factorial (n - 1) -- Recursive Case
@@ -55,8 +71,12 @@ evaluate (Mod a b)   = evaluate a `mod` evaluate b
 -- >>> calc "5! * 2 - 3 + 6 "
 -- 243
 --
--- >> calc "- (6! + 2) % 7 * 9 "
+-- >>> calc "- (6! + 2) % 7 * 9 "
 -- -9
+--
+-- >>> calc "((5 + (5 ^ 2)) / (6 - (3 * 1)))"
+-- 10
+--
 calc :: String -> Int
 calc = evaluate . parseExpr
 
@@ -136,8 +156,8 @@ evaluate2 (Mod a b) =
     Right a' ->
       case evaluate2 b of
         Left msg -> Left msg
-        Right b' | b' == 0   -> Left ("Divided by zero: " ++ show b)
-                 | otherwise -> Right (a' `mod` b')
+        Right 0  -> Left ("Divided by zero: " ++ show b)
+        Right b' -> Right (a' `mod` b')
 
 
 calc2 :: String -> Either String Int
@@ -165,7 +185,7 @@ evaluate3 (Sub a b) = flatMap (evaluate3 a) (\a' -> flatMap (evaluate3 b) (\b' -
 evaluate3 (Mult a b) = flatMap (evaluate3 a) (\a' -> flatMap (evaluate3 b) (\b' -> Right (a' * b')))
 evaluate3 (Div a b) = flatMap (evaluate3 a) (\a' -> flatMap (evaluate3 b) (\b' -> if b' == 0 then Left ("Divided by zero: " ++ show b) else Right (a' `div` b')))
 evaluate3 (Power a b) = flatMap (evaluate3 a) (\a' -> flatMap (evaluate3 b) (\b' -> if b' < 0 then Left ("To the power of a negative number: " ++ show b) else Right (a' ^ b')))
-evaluate3 (Neg a) = flatMap (evaluate3 a) (\n -> Right (negate n))
+evaluate3 (Neg a) = flatMap (evaluate3 a) (\a' -> Right (negate a'))
 evaluate3 (Fact a) = flatMap (evaluate3 a) (\a' -> if a' < 0 then Left ("Factorial of a negative number: " ++ show a) else Right (factorial a'))
 evaluate3 (Mod a b) = flatMap (evaluate3 a) (\a' -> flatMap (evaluate3 b) (\b' -> if b' == 0 then Left ("Divided by zero: " ++ show b) else Right (a' `mod` b')))
 
@@ -211,39 +231,39 @@ calc3 = evaluate3 . parseExpr
 -- >>> elim0 (Add (Fact (Num 1)) (Mod (Mult (Num 23) (Mult (Num 0) (Num 10))) (Num 0)))
 -- (1 ! )
 elim0 :: Exp -> Exp
-elim0 (Num n)         = Num n
-elim0 (Add a b)       =
+elim0 (Num n) = Num n
+elim0 (Add a b) =
   case elim0 a of
     Num 0 -> b
     dummy1 -> case elim0 b of
         Num 0 -> a
         dummy2 -> Add a b
-elim0 (Sub a b)       =
+elim0 (Sub a b) =
   case elim0 b of
     Num 0 -> a
     dummy -> Sub a b
-elim0 (Mult a b)      =
+elim0 (Mult a b) =
   case elim0 a of
     Num 0 -> Num 0
     dummy1 -> case elim0 b of
         Num 0 -> Num 0
         dummy2 -> Mult a b
-elim0 (Div a b)       =
+elim0 (Div a b) =
   case elim0 a of
     Num 0 -> Num 0
     dummy -> Div a b
-elim0 (Power a b)     =
+elim0 (Power a b) =
   case elim0 a of
     Num 0 -> Num 0
     dummy1 -> case elim0 b of
         Num 0 -> Num 1
         dummy2 -> Power a b
-elim0 (Neg a)         =
+elim0 (Neg a) =
   case elim0 a of
     Num 0 -> Num 0
     dummy -> Neg a
-elim0 (Fact a)      = Fact a
-elim0 (Mod a b)     =
+elim0 (Fact a) = Fact a
+elim0 (Mod a b) =
   case elim0 a of
     Num 0 -> Num 0
     dummy -> Mod a b
