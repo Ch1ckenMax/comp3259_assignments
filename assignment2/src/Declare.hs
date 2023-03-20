@@ -108,6 +108,9 @@ prog2 =
                       (Call "max" [Var "x", Unary Neg (Var "x")]))
           ] (Call "max" [Call "absolute" [Lit (IntV (-5))], Lit (IntV 4)])
 
+testprog :: Program
+testprog = Program [ ("B", Function [("x",TInt), ("y",TInt)] (If (Bin GT (Var "x") (Var "y")) (Call "C" [Var "x"]) (Var "y"))) ,  ("C", Function [("x", TInt)] (Var "x") ) , ("A", Function [("x",TInt)] (If (Bin GT (Var "x") (Call "C" [Lit (IntV 2)])) (Var "x") ( Call "B" [Var "x", Lit (IntV 0)] )))] (Call "A" [Lit (IntV 4)])
+
 
 -- | Pretty-printing programs
 --
