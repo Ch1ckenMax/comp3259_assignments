@@ -4,7 +4,6 @@ import Data.Maybe (fromJust)
 import Data.List (elemIndex)
 import Prelude hiding (LT, GT, EQ)
 import Control.Exception (ArrayException(IndexOutOfBounds))
-import GHC.Base (neChar)
 
 data BinaryOp = Add | Sub | Mult | Div
               | GT  | LT  | LE   | GE  | EQ
@@ -124,7 +123,9 @@ instance Show Program where
   show (Program fenv e) = showSep "\n" (map showFun fenv) ++ "\n" ++ show e
 
 showSep :: String -> [String] -> String
-showSep = error "TODO: Question 3"
+showSep sep [] = ""
+showSep sep [s1] = s1
+showSep sep (s1:s2:s) = s1 ++ sep ++ showSep sep (s2:s) -- case when there are more than 1 elements in s
 
 -- | Pretty-printing functions
 --
@@ -134,8 +135,8 @@ showSep = error "TODO: Question 3"
 -- "function foo(x: Int, y: Int) {\n  x + y\n}"
 
 showFun :: (String, Function) -> String
-showFun = error "TODO: Question 4"
-
+showFun (funcName, Function params body) = "function " ++ funcName ++ "(" ++ showSep ", " paramList ++ ") {\n  " ++ show body ++ "\n}" where
+  paramList = map (\(varname,vartype) -> varname ++ ": " ++ show vartype) params -- turn the parameter list to a string list, where each element is "varname: variable type"
 
 instance Show Exp where
   show = showExp 0

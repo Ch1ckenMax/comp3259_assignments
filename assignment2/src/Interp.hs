@@ -4,6 +4,7 @@ import Declare
 import Prelude hiding (LT, GT, EQ)
 import Data.Maybe (fromJust)
 import Parser (parseExpr, parseProg)
+import GHC.Base (neChar)
 
 unary :: UnaryOp -> Value -> Value
 unary Not (BoolV b) = BoolV (not b)
@@ -75,7 +76,28 @@ execute (Program funEnv main) = evaluate main [] funEnv
 -- >>> execute prog2
 -- 5
 evaluate :: Exp -> Env -> FunEnv -> Value
-evaluate = error "TODO: Question 5"
+evaluate (Lit n) env funEnv = n
+evaluate (Unary op e) env funEnv = unary op (evaluate e env funEnv)
+evaluate (Bin op e1 e2) env funEnv = binary op (evaluate e1 env funEnv) (evaluate e2 env funEnv)
+evaluate (If cond e1 e2) env funEnv = 
+  case evaluate cond env funEnv of
+        IntV n -> error ((show cond) ++ " is not a boolean.") -- condition of if statement should be a boolean
+        BoolV b -> if b then evaluate e1 env funEnv  else evaluate e2 env funEnv 
+evaluate (Var varname) env funEnv =
+  case lookup varname env of
+    Just n -> n
+    Nothing -> error ("Variable " ++ varname ++ " not declared.")
+evaluate (Decl varname e1 body) env funEnv = evaluate body env' funEnv where
+  env' = (varname, evaluate e1 env funEnv):env
+evaluate (Call funcname argExps) env funEnv =
+  case lookup funcname funEnv of
+    Just (Function params body) -> evaluate body env' funEnv where
+      paramNames = map fst params -- take the first element of each tuple in the parameter list (i.e. extract the parameter names)
+      args = map (\e -> evaluate e env funEnv) argExps -- evalaute the arguments
+      newVariables = zip paramNames args -- list of new variables to be inserted to the variable environment
+      env' = newVariables ++ env
+    Nothing -> error ("Function " ++ funcname ++ " not declared.")
+
 
 
 -- | Function substitution
