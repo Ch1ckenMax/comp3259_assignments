@@ -5,7 +5,6 @@ import Prelude hiding (LT, GT, EQ)
 import Data.Maybe (fromJust)
 import Parser (parseExpr, parseProg)
 import Data.List (elemIndex)
-import Data.Graph (Vertex, Edge , buildG, topSort)
 
 unary :: UnaryOp -> Value -> Value
 unary Not (BoolV b) = BoolV (not b)
@@ -142,46 +141,12 @@ fsubst (f, Function xs body) (Call funcname args) = if f == funcname then fsubst
 -- >>> execute' prog2
 -- 5
 
--- For any function A, B: if A calls B in A's function body, then A must be substituted to the main expression before B is substituted to the main expression
--- Since recursive functions are not supported, we may also think that any mutual recursive calls are not allowed
--- Then, we may model this problem to a graph problem: 
--- 1. We denote each function as a vertex, and the relation of "A calls B" be a directed edge from A to B in the graph: the graph is a directed graph
--- 2. We do not allow any form of recursion: the graph must be an acyclic graph
--- Since the graph will be a directed acyclic graph (DAG), we may use topological sort to find the appropriate order of executing fsubst
 execute' :: Program -> Value
-execute' (Program funEnv main) = evaluate' body' [] where
-  -- Get all the edges
-  getAllEdges :: FunEnv -> [Edge]
-  getAllEdges [] = []
-  getAllEdges (x:xs) = getEdges x ++ getAllEdges xs where
-    -- Get the edges that starts from the function A in the argument
-    getEdges :: (String, Function) -> [Edge]
-    getEdges (funcname, Function params body) = map (\v -> (indexOfThisFunc, v)) (getEdges_aux body) where
-      functionNames = map fst funEnv
-      indexOfThisFunc = fromJust (elemIndex funcname functionNames) -- index of the function A given in the argument with respect to the function environment
-      -- Get the list of indices of the functions that are called in the function A's body
-      getEdges_aux :: Exp -> [Vertex]
-      getEdges_aux (Lit n) = []
-      getEdges_aux (Unary op e) = getEdges_aux e
-      getEdges_aux (Bin op e1 e2) = getEdges_aux e1 ++ getEdges_aux e2
-      getEdges_aux (If e1 e2 e3) = getEdges_aux e1 ++ getEdges_aux e2 ++ getEdges_aux e3
-      getEdges_aux (Var v) = []
-      getEdges_aux (Decl v e1 e2) = getEdges_aux e1 ++ getEdges_aux e2
-      getEdges_aux (Call funcname_in args) = if funcname == funcname_in then [] else [fromJust (elemIndex funcname_in functionNames)] -- When a function calls itself, just return an empty list. (Recursion is not allowed)
-  
-  -- Construct a graph with all the edges 
-  funcGraph = buildG verticesIndexBounds allEdges where
-    verticesIndexBounds = (0, length funEnv - 1)
-    allEdges = getAllEdges funEnv
-  
-  -- Do topological sort
-  substitutionOrder = topSort funcGraph
-
-  -- Substitute the functions in the topological order
-  body' = fsubstall substitutionOrder main where
-    fsubstall [] e = e
-    fsubstall (x:xs) e = fsubstall xs e' where 
-      e' = fsubst (funEnv!!x) e
+execute' (Program funEnv main) = evaluate' main' [] where
+  main' = fsubstall funEnv main
+  fsubstall :: FunEnv -> Exp -> Exp -- substitute each of the elements of funEnv in reverse order (under the assumption of sorted funEnv)
+  fsubstall [] e = e
+  fsubstall (x:xs) e = fsubst x (fsubstall xs e)
 
 
 evaluate' :: Exp -> Env -> Value
