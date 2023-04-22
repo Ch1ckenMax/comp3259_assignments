@@ -1,0 +1,201 @@
+Question 5:
+
+let p1 = function(x: Int){ x * 1 }
+
+Main tree:
+                            [Subderivation]
+--------------------EFun   ------------------------------ECall
+. |- p1 -> (p1, . )        id = (p1, .) |- id(10) -> 10
+---------------------------------------------------------EDecl
+. |- var id = p1; id(10) -> 10
+
+Sub Derivation:
+
+                                                                      (x = 10)(x) = 10
+                                                                      ------------------EVar ------------------EInt
+(id = (p1, .))(id) = (p1, .)                                          x = 10 |- x -> 10       x = 10 |- 1 -> 1
+------------------------------EVar    -------------------------EInt   -----------------------------------------EMult
+id = (p1, .) |- id -> (p1, .)         id = (p1, .) |- 10 -> 10        x = 10 |- x * 1 -> 10
+
+
+
+Question 6:
+
+let multFun = function(x: Int) { function(y: Int) { x * y }}
+let multFunInner = function(y: Int) { x * y }
+let multType = Int -> (Int -> Int)
+
+Main tree:
+
+[Subderivation 1]            [Subderivation 2]
+-----------------------TFun  ---------------------------------TCall
+. |- multFun: multType       mult: multType |- mult(3)(8) : Int 
+--------------------------------------------------------------TDecl
+. |- var mult = multFun; mult(3)(8) : Int
+
+Sub Derivation 1:
+
+x: Int in (x: Int, y: Int)    y: Int in (x: Int, y: Int)
+------------------------TVar  ------------------------TVar
+x: Int, y: Int |- x: Int        x: Int, y: Int |- y: Int
+---------------------------------------------------TMult
+x: Int, y: Int |- x * y : Int
+---------------------------------------------------TFun
+x: Int |- multFunInner : Int -> Int
+
+Sub Derivation 2:
+
+mult: multType in mult: multType 
+---------------------------------TVar  -------------------------TInt
+mult: multType |- mult: multType       mult: multType |- 3: Int   
+------------------------------------------------------------------------TCall   --------------------------TInt
+mult: multType |- mult(3): Int -> Int                                           mult: multType |- 8: Int
+
+
+
+Question 7:
+
+let func = function(y: Int){x*y}
+let clusterf = x = 2, double = (func, x = 2), x = 4
+
+Main tree:
+
+                                                      [Subderivation]
+                  ------------------------------EFun  --------------------------------------------------------------EDecl
+                  x = 2 |- func -> (func, x = 2)      x = 2, double = (func, x = 2) |- var x = 4; double(x) -> 8
+------------EInt  --------------------------------------------------------------------------------------------------EDecl
+. |- 2 -> 2       x = 2 |- var double = func; var x = 4; double(x) -> 8
+--------------------------------------------------------------------------------------------------------------------EDecl
+. |- var x = 2; var double = func; var x = 4; double(x) -> 8
+
+Sub Derivation:
+
+                                                                                                                 (x = 2, y = 4)(x) = 2        (x = 2, y = 4)(y) = 4
+                                                                                                                 -----------------------EVar  -----------------------EVar
+                                               clusterf(double) = (func, x = 2)         clusterf(x) = 4          x = 2, y = 4 |- x -> 2       x = 2, y = 4 |- y -> 4
+                                               -----------------------------------EVar  -------------------EVar  ----------------------------------------------------EMult
+                                               clusterf |- double -> (func, x = 2)      clusterf |- x -> 4       x = 2, y = 4 |- x * y -> 8
+---------------------------------------EInt    -------------------------------------------------------------------------------------------------ECall
+x = 2, double = (func, x = 2) |- 4 -> 4        clusterf |- double(x) -> 8
+
+
+
+Question 8:
+
+let applyFunc = function(f: Int -> Int) { function(x: Int) { f(x) }}
+let applyFuncInner = function(x: Int) { f(x) }
+let applyType = (Int -> Int) -> (Int -> Int)
+let doubleFunc = function(x: Int) {x*2}
+let clusterf = apply: applyType, double: Int -> Int 
+
+Main tree:
+
+[Subderivation1]                    [Subderivation2]
+-------------------------------------------------------------------------------TDecl
+. |- var apply = applyFunc; var double = doubleFunc; apply(double)(10) : Int 
+
+Sub Derivation 1:
+
+f: Int -> Int in f : Int -> Int, x: Int        x: Int in f : Int -> Int, x: Int
+-----------------------------------------TVar   ---------------------------------TVar
+f: Int -> Int, x: Int |- f : Int -> Int        f: Int -> Int, x: Int |- x: Int
+---------------------------------------------------------------------------------TCall
+f: Int -> Int, x: Int |- f(x) : Int
+---------------------------------------------------------------------------------TFun
+f: Int -> Int |- applyFuncInner : Int -> Int
+---------------------------------------------------------------------------------TFun
+. |- applyFunc : applyType
+
+Sub Derivation 2:
+
+x: Int in apply : applyType, x: Int
+------------------------------------TVar  ------------------------------------TInt
+apply: applyType, x: Int |- x: Int        apply: applyType, x: Int |- 2: Int
+------------------------------------------------------------------------------TMult
+apply: applyType, x: Int |- x * 2 : Int
+-------------------------------------------------------------------------------TFun
+apply: applyType |- doubleFunc: Int -> Int                                              [Subderivation3]
+----------------------------------------------------------------------------------------------------------TDecl
+apply: applyType |- var double = doubleFunc; apply(double)(10) : Int
+
+Sub Derivation 3:
+
+apply: applyType in clusterf       double: Int -> Int in clusterf
+-----------------------------TVar  -------------------------------TVar
+clusterf |- apply: applyType       clusterf |- double: Int -> Int
+------------------------------------------------------------------TCall   ---------------------TInt
+clusterf |- apply(double): Int -> Int                                     clusterf |- 10 : Int
+-----------------------------------------------------------------------------------------------TCall
+clusterf |- apply(double)(10) : Int
+
+
+
+Question 9:
+
+The program cannot be evaluated.
+
+let fibFunc = function(n: Int) { if (n <= 1) n; else fib(n - 1) + fib(n -2)}
+
+The partial derivation tree:
+
+                                   (fib = (fibFunc, .))(fib) = (fibFunc, .)
+                                   -----------------------------------------EVar  ----------------------------EInt
+                                   fib = (fibFunc, .) |- fib -> (fibFunc, .)      fib = (fibFunc, .) |- 2 -> 2          [Subderivation]
+----------------------------EFun   -----------------------------------------------------------------------------------------------------ECall
+. |- fibFunc -> (fibFunc, .)       fib = (fibFunc, .) |- fib(2) -> ???
+----------------------------------------------------------------------------------------------------------------------------------------EDecl
+. |- var fib = fibFunc; fib(2) -> ???
+
+Sub Derivation:                           
+
+(n = 2)(n) = 2                             (x)                               (x)
+----------------EVar  ---------------EInt  ---------------------------ECall  ---------------------------ECall
+n = 2 |- n -> 2       n = 2 |- 1 -> 1      n = 2 |- fib(n - 1) -> ???        n = 2 |- fib(n - 2) -> ???
+-------------------------------------ELE   -------------------------------------------------------------EAdd
+n = 2 |- n <= 1 -> False                   n = 2 |- fib(n - 1) + fib(n -2) -> ???
+--------------------------------------------------------------------------------------------------------EIfFalse
+n = 2 |- if (n <= 1) n; else fib(n - 1) + fib(n -2) -> ???
+
+
+The rule EDecl shall be modified:
+
+delta, x = v1 |- x -> v1   delta, x = v1 |- e2 -> v2
+------------------------------------------------------EDecl
+delta |- var x = e1; e2 -> v2
+
+
+
+Question 10:
+
+The program cannot be type checked.
+
+let factFunc = function(n: Int){ if (n == 0) 1; else n * fact(n - 1)}
+
+The partial derivation tree:
+
+n: Int in n: Int
+----------------TVar  ----------------TInt
+n: Int |- n: Int      n: Int |- 0: Int
+--------------------------------------TEQ   -----------------TInt
+n: Int |- n == 0: Bool                      n: Int |- 1 : Int      [subderivation]
+--------------------------------------------------------------------------------------TIf
+n: Int |- if (n == 0) 1; else n * fact(n - 1): ???                                             
+-----------------------------------------------------------------------------------------TFun 
+. |- factFunc: ???                                                                            
+----------------------------------------------------------------------------------------------------------------------------------------------------------TDecl
+. |- var fact = factFunc; fact(5): ???
+
+Sub Derivation:
+
+n: Int in n: Int       (x)
+----------------TVar  ----------------------------------TCall
+n: Int |- n: Int       n: Int |- fact(n - 1):
+---------------------------------------------------------TMult
+n: Int |- n * fact(n - 1): ???
+
+
+The rule TDecl shall be modified:
+
+gamma, e1: T1 |- e1: T1   gamma, x: T1 |- e2: T2
+-------------------------------------------------TDecl
+gamma |- var x = e1; e2: T2

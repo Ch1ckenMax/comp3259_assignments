@@ -26,7 +26,36 @@ binary _ _ _ = undefined
 -- Call-by-need evaluation
 
 evaluate :: Exp -> Env -> (Value, Env)
-evaluate = error "TODO: Question 11 & 12"
+evaluate (Lit n) env = (n, env)
+evaluate (Unary op e1) env = let (e1result, e1env) = evaluate e1 env in (e1result, e1env)
+evaluate (Bin op e1 e2) env =
+    let (e1result, e1env) = evaluate e1 env in
+        let (e2result, e2env) = evaluate e2 e1env in
+            (binary op e1result e2result, e2env)
+evaluate (If e1 e2 e3) env =
+    case evaluate e1 env of
+        (BoolV b, e1env) ->
+            if b then 
+                let (e2result, e2env) = evaluate e2 e1env in (e2result, e2env)
+            else
+                let (e3result, e3env) = evaluate e3 e1env in (e3result, e3env)
+        _ -> (error "Non boolean in condition of if statement")
+evaluate (Var varname) env =
+    case lookup varname env of
+        Just (Left (CExp e1 env')) -> (e1result, (varname, Right e1result): env) where e1result = fst (evaluate e1 env')
+        Just (Right n) -> (n, env)
+        Nothing -> error ("Variable " ++ varname ++ " not declared.")
+-- Not using the environment from the evaluation of body. Otherwise, the lexical can be messed up. e.g.: var x = 2 + 5; (var x = 4; x) + x
+evaluate (Decl varname vartype e1 body) env = (bodyResult, env) where 
+    (bodyResult, bodyEnv) = evaluate body newEnv where 
+        newEnv = (varname, Left (CExp e1 newEnv)):env
+evaluate (Call f x) env = 
+    case evaluate f env of
+        (ClosureV (varname, vartype) body cenv, fenv) -> (bodyResult, fenv) where 
+            (bodyResult, bodyEnv) = evaluate body closuredEnv where
+                closuredEnv = (varname, Left (CExp x env)):cenv
+        _ -> error ((show f) ++ " is not a function.")
+evaluate (Fun (paramname, paramType) body) env = (ClosureV (paramname, paramType) body env, env)
 
 execute :: Exp -> Value
 execute e = fst (evaluate e [])

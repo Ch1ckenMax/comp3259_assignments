@@ -159,6 +159,8 @@ prog2 = Decl "mult" (TFun TInt (TFun TInt TInt)) (Fun ("x", TInt) (Fun ("y", TIn
 prog3 :: Exp
 prog3 = Decl "x" TInt (Lit (IntV 2)) (Decl "double" (TFun TInt TInt) (Fun ("y", TInt) (Bin Mult (Var "x") (Var "y"))) (Decl "x" TInt (Lit (IntV 4)) (Call (Var "double") (Var "x"))))
 
+testprog = Decl "x" TInt (Bin Add (Lit (IntV 4)) (Lit (IntV 2))) (Bin Mult (Var "x") (Var "x"))
+
 -- /* Program 4 */
 -- var apply = function(f: Int -> Int) {
 --   function(x: Int) {
