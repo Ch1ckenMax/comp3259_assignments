@@ -132,6 +132,6 @@ iszero cn  = cn (\x -> false) true
 -- >>> unchurch (exp (church 2) (church 3))
 -- 8
 
-mul cn cm  = error "TODO: Question 3"
+mul cn cm  = \f x -> cn (cm f) x 
 
-exp cn cm  = error "TODO: Question 4"
+exp cn cm  = \f x -> (cm cn) f x

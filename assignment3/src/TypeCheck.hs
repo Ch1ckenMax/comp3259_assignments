@@ -3,6 +3,7 @@ module TypeCheck where
 import Declare
 import Data.Foldable (for_)
 import Prelude hiding (LT, GT, EQ)
+import Tokens (Token(TokenVar))
 
 type TEnv = [(String, Type)]
 
@@ -59,4 +60,21 @@ tcheck (Call e1 e2) env = do
   t2 <- tcheck e2 env
   case t1 of TFun t3 t4 | t3 == t2 -> Right t4
              _ -> Left "failed function application"
-tcheck (MultDecl xs body) env = error "TODO: Question 13"
+tcheck (MultDecl xs body) env = do
+  _ <- multDecl_aux xs rEnv
+  tcheck body rEnv
+  where
+    -- Create a type environment with the declarations without checking
+    env_aux :: [(String, Type, Exp)] -> TEnv -> TEnv
+    env_aux ((varname, vartype, e1):funcList) recursiveEnv = (varname, vartype):(env_aux funcList recursiveEnv)
+    env_aux [] recursiveEnv = []
+
+    rEnv = env_aux xs (rEnv ++ env)
+
+    -- Auxiliary function to help checking each elements in the declaration list
+    multDecl_aux :: [(String, Type, Exp)] -> TEnv -> Either String Type
+    multDecl_aux ((varname, vartype, e1):funcList) rEnv = do
+      dtype <- tcheck e1 rEnv
+      if vartype == dtype then do multDecl_aux funcList rEnv
+      else Left "declaration type mismatch"
+    multDecl_aux [] rEnv = Right TInt --TInt is just a placeholder, it means the checking is successful.

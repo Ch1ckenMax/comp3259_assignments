@@ -192,3 +192,11 @@ prog5 = Decl "fib" (TFun TInt TInt) (Fun ("n", TInt) (If (Bin LE (Var "n") (Lit 
 -- fact(5)
 prog6 :: Exp
 prog6 = Decl "fact" (TFun TInt TInt) (Fun ("n", TInt) (If (Bin EQ (Var "n") (Lit (IntV 0))) (Lit (IntV 1)) (Bin Mult (Var "n") (Call (Var "fact") (Bin Sub (Var "n") (Lit (IntV 1))))))) (Call (Var "fact") (Lit (IntV 5)))
+
+
+
+multTest :: Exp
+multTest = MultDecl [("even", TFun TInt TBool, (Fun ("x", TInt) (If (Bin EQ (Var "x") (Lit (IntV 0))) (Lit (BoolV True)) (Call (Var "odd") (Bin Sub (Var "x") (Lit (IntV 1)) )) ))), ("odd", TFun TInt TBool, (Fun ("x", TInt) (If (Bin EQ (Var "x") (Lit (IntV 0))) (Lit (BoolV False)) (Call (Var "even") (Bin Sub (Var "x") (Lit (IntV 1)) )) )))] (Call (Var "even") (Lit (IntV 21)))
+
+declTest :: Exp
+declTest = Decl "x" TInt (Bin Add (Lit (IntV 2)) (Lit (IntV 5))) (Bin Add ( Decl "x" TInt (Lit (IntV 4)) (Var "x") ) (Var "x"))

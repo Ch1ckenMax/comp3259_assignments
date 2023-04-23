@@ -56,6 +56,17 @@ evaluate (Call f x) env =
                 closuredEnv = (varname, Left (CExp x env)):cenv
         _ -> error ((show f) ++ " is not a function.")
 evaluate (Fun (paramname, paramType) body) env = (ClosureV (paramname, paramType) body env, env)
+evaluate (MultDecl funcList body) env = (bodyResult, env)
+        where 
+            -- Auxiliary function to help creating closures for the functions
+            multDecl_aux :: [(String, Type, Exp)] -> Env -> Env
+            multDecl_aux ((varname, vartype, e1):funcList) recursiveEnv = (varname, Left (CExp e1 recursiveEnv)):(multDecl_aux funcList recursiveEnv)
+            multDecl_aux [] recursiveEnv = []
+
+            recursiveEnv = multDecl_aux funcList (recursiveEnv ++ env) --The closures are cyclic, so mutual recursion is possible.
+            (bodyResult, bodyEnv) = evaluate body recursiveEnv
+
+
 
 execute :: Exp -> Value
 execute e = fst (evaluate e [])
